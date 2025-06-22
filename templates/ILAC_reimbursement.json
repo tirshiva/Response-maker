@@ -1,0 +1,12 @@
+{
+  "name": "Reimbursement Email",
+  "body": "Hello from Amazon Selling Partner Support,\n\nWe've investigated your shipment {shipment_number} and determined that a reimbursement is required.\n\nWe have therefore initiated a reimbursement request on your behalf. A credit, either in cash or in the form of replacement products with the same FNSKU, will appear in your account in 4-5 business days after the reimbursement has been approved.\n\nFNSKU: {Enter_FNSKU} , Quantity: {Enter_quantity} units\n\nIf we previously reimbursed you for lost inventory that is subsequently found or determine that any reimbursement was given in error, we may reverse the credit that was added to your account. \n\nTo view the reimbursement amounts, follow the steps below: \n\n1. Go to your Reimbursements report:\n\nhttps://sellercentral.amazon.com/reportcentral/REIMBURSEMENTS/0\n\n2. Enter the reimbursement ID {reimbursement_id}, choose the event date, and click \"Generate Report.\" \n\n3. For the cash amount, view the \"Amount Per Unit,\" \"Amount Total,\" and \"Quantity Reimbursed\" columns.\n\n4. For inventory, view \"Quantity Reimbursed\" and \"Quantity Reimbursed {reimbursement_amount}.\"\n\nFor more information, go to the following help pages: \n\n- FBA inventory reimbursement policy:\n\nhttps://sellercentral.amazon.com/help/hub/reference/G200213130\n\n- Amazon Services Business Solutions Agreement:\n\nhttps://sellercentral.amazon.com/help/hub/reference/G1791\n\nThe shipment is now closed. For more information, go to the shipment summary:\n\n{Shipment_summary}",
+  "variables": [
+    "shipment_number",
+    "Enter_FNSKU",
+    "Enter_quantity",
+    "reimbursement_id",
+    "reimbursement_amount",
+    "Shipment_summary"
+  ]
+} 

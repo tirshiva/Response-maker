@@ -1,0 +1,8 @@
+{
+  "name": "ILAC_Invoice_required.json",
+  "body": "Hello from Amazon Selling Partner Support,\n\nWe understand that you have contacted us regarding the investigation of FBA shipment {shipment_number}. \n\nWe have completed our investigation; however, we require further details regarding the invoice, as we are unable to identify the ASINs {ASINs} in question in the provided document.\n\nThe document you submitted does not show a completed purchase of the items. To help us complete our research, please provide the original invoice from the manufacturer or supplier. \n\nWe accept invoices and retail sales receipts from both physical and online stores.\n\nThe invoice must include:\n\t\u2022 Date of purchase\n\t\u2022 Product name of the missing units\n\t\u2022 Quantity purchased\n\nAdditionally, the invoice must cover all units that were sent in your shipments from the invoice date to the ship date. Please note that we cannot accept pro forma invoices, sales contracts, or purchase contracts, as they do not indicate a completed purchase.\n\nAll invoices and packing slips must be in a non-editable format and clearly issued by a supplier or manufacturer. We do not accept documents in Excel, Word, or other editable formats. \n\nKindly provide a scanned copy or a picture of the original invoice in PDF, JPG, JPEG, PNG, or TIFF format.\n\nFor more details, please refer to Amazon's FBA inventory reimbursement policy: https://sellercentral.amazon.com/help/hub/reference/GEYPWTSQRTXXXMVB",
+  "variables": [
+    "shipment_number",
+    "ASINs"
+  ]
+}

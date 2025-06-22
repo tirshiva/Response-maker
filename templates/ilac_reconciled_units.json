@@ -1,0 +1,9 @@
+{
+  "name": "ILAC_reconciled_units",
+  "body": "Hello from Amazon Selling Partner Support,\n\nWe understand that you recently contacted us regarding the investigation of shipment {shipment_number} for FNSKU {FNSKU}.\n\nWe have completed our investigation and adjusted the unit discrepancies for the ASINs associated with this shipment. You can view the updated unit counts on the shipment summary page:\n\n{shipment_summary_report}\n\nFor more information on reconciling your shipment, please visit the following link:\n\nhttps://sellercentral.amazon.it/help/hub/reference/G201214140 ",
+  "variables": [
+    "shipment_number",
+    "FNSKU",
+    "shipment_summary_report"
+  ]
+}
