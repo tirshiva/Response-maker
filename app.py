@@ -30,18 +30,42 @@ def show_retry_button(context_key):
     if st.button("Retry", key=f"retry_{context_key}"):
         st.rerun()
 
+def update_recent_templates(template_file):
+    if 'recent_templates' not in st.session_state:
+        st.session_state['recent_templates'] = []
+    if template_file in st.session_state['recent_templates']:
+        st.session_state['recent_templates'].remove(template_file)
+    st.session_state['recent_templates'].insert(0, template_file)
+    st.session_state['recent_templates'] = st.session_state['recent_templates'][:3]
+
+def show_template_stats(template_files):
+    st.markdown(f"<div style='background-color:#f0f4fa;padding:8px 16px;border-radius:8px;display:inline-block;margin-bottom:10px;font-size:1.1em;'><b>📊 Total Email Templates:</b> {len(template_files)}</div>", unsafe_allow_html=True)
+
 tabs = st.tabs(["Generate Response", "Add New Template", "Edit Template"])
 
 # --- Tab 1: Generate Response ---
 with tabs[0]:
     st.button("Refresh Templates", on_click=clear_template_cache, key="refresh_templates_btn")
     template_files = list_templates()
+    show_template_stats(template_files)
     if not template_files:
         st.warning("No templates found. Please add a template first or check your connection.")
         show_retry_button("gen")
     else:
+        # Search box for template name
+        search_query = st.text_input("Search template name", "", key="gen_search_box")
+        filtered_template_files = [f for f in template_files if search_query.lower() in f.lower()]
+        # Recent templates section
+        st.markdown("**Recent Templates:**")
+        recent_templates = st.session_state.get('recent_templates', [])
+        shown_recent = [f for f in recent_templates if f in template_files][:3]
+        cols = st.columns(len(shown_recent) if shown_recent else 1)
+        selected_recent = None
+        for i, f in enumerate(shown_recent):
+            if cols[i].button(f, key=f"recent_btn_{f}"):
+                selected_recent = f
         # Parse user, skill, and template name from filenames
-        user_skill_template_list = [parse_template_info(f) for f in template_files]
+        user_skill_template_list = [parse_template_info(f) for f in filtered_template_files]
         users = sorted(set(u for u, _, _ in user_skill_template_list))
         skills = sorted(set(s for _, s, _ in user_skill_template_list))
         selected_users = st.multiselect("Filter by User Alias", users, default=users, key="gen_user_filter")
@@ -50,8 +74,12 @@ with tabs[0]:
         if not filtered_indices:
             st.info("No templates match the selected filters.")
         else:
-            filtered_files = [template_files[i] for i in filtered_indices]
-            selected_idx = st.selectbox("Choose a template", range(len(filtered_files)), format_func=lambda i: filtered_files[i], key="gen_template_select")
+            filtered_files = [filtered_template_files[i] for i in filtered_indices]
+            # If a recent template button was clicked, use it as the selected template
+            if selected_recent and selected_recent in filtered_files:
+                selected_idx = filtered_files.index(selected_recent)
+            else:
+                selected_idx = st.selectbox("Choose a template", range(len(filtered_files)), format_func=lambda i: filtered_files[i], key="gen_template_select")
             selected_template_file = filtered_files[selected_idx]
             template = load_template(selected_template_file)
             if not template:
@@ -70,6 +98,7 @@ with tabs[0]:
                     return body.format(**variables)
                 if st.button("Generate Response", key="gen_generate_btn"):
                     try:
+                        update_recent_templates(selected_template_file)
                         response = fill_template(template['body'], user_inputs)
                         st.success("Generated Email:")
                         st.text_area("Response", response, height=400, key="gen_response_box")
@@ -120,8 +149,9 @@ with tabs[1]:
     </div>
     """, unsafe_allow_html=True)
     st.header("Add a New Email Template")
-    st.button("Refresh Templates", on_click=clear_template_cache, key="refresh_templates_btn_add")
     template_files = list_templates()
+    show_template_stats(template_files)
+    st.button("Refresh Templates", on_click=clear_template_cache, key="refresh_templates_btn_add")
     if not template_files:
         st.warning("Could not load templates. Please check your connection.")
         show_retry_button("add")
