@@ -26,7 +26,7 @@ def parse_template_info(filename):
 st.set_page_config(page_title="Response Maker", layout="centered")
 st.title("📧 Response Maker")
 
-tabs = st.tabs(["Generate Response", "Add New Template"])
+tabs = st.tabs(["Generate Response", "Add New Template", "Edit Template"])
 
 # --- Tab 1: Generate Response ---
 with tabs[0]:
@@ -139,4 +139,40 @@ with tabs[1]:
             filename = f"{template_name.strip().replace(' ', '_').lower()}.json"
             save_template(filename, template_data)
             st.success(f"Template '{template_name}' saved!")
-            st.experimental_rerun() 
+            st.experimental_rerun()
+
+# --- Tab 3: Edit Template ---
+with tabs[2]:
+    st.header("Edit an Existing Template")
+    template_files = list_templates()
+    if not template_files:
+        st.warning("No templates found to edit.")
+    else:
+        selected_template_file = st.selectbox("Select a template to edit", template_files, key="edit_template_select")
+        template = load_template(selected_template_file)
+        if template is None:
+            st.error("Could not load the selected template.")
+        else:
+            # Pre-fill fields
+            new_name = st.text_input("Template Name (cannot be changed)", value=selected_template_file.rsplit('.', 1)[0], disabled=True)
+            new_description = st.text_input("Short Description (when to use this template)", value=template.get("description", ""))
+            new_body = st.text_area("Email body (use {variable} for placeholders)", value=template.get("body", ""), height=300)
+            detected_vars = re.findall(r'\{(.*?)\}', new_body)
+            detected_vars = list(dict.fromkeys([v.strip() for v in detected_vars if v.strip()]))
+            st.info(f"Detected variables: {', '.join(detected_vars) if detected_vars else 'None'}")
+            custom_vars = st.text_input("Edit variables (comma-separated)", value=", ".join(detected_vars))
+            if st.button("Save Changes", key="edit_save_btn"):
+                if not new_body.strip():
+                    st.error("Email body is required.")
+                elif not new_description.strip():
+                    st.error("Short description is required.")
+                else:
+                    variables = [v.strip() for v in custom_vars.split(',') if v.strip()]
+                    template_data = {
+                        "name": template.get("name", new_name),
+                        "body": new_body,
+                        "variables": variables,
+                        "description": new_description.strip()
+                    }
+                    save_template(selected_template_file, template_data)
+                    st.success(f"Template '{selected_template_file}' updated!") 

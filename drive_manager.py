@@ -4,13 +4,13 @@ import json
 from google.oauth2 import service_account
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaIoBaseDownload, MediaIoBaseUpload
+import streamlit as st
 
 # Set your Google Drive folder ID
 FOLDER_ID = '1n82PnBOXUg7ubBHu0hctxn3B2ujB1jTG'
 SCOPES = ['https://www.googleapis.com/auth/drive']
 
 def get_credentials():
-    import streamlit as st
     if hasattr(st, 'secrets') and 'gdrive' in st.secrets and 'service_account_json' in st.secrets['gdrive']:
         service_account_info = json.loads(st.secrets['gdrive']['service_account_json'])
         return service_account.Credentials.from_service_account_info(service_account_info, scopes=SCOPES)
@@ -61,4 +61,5 @@ def upload_template_drive(filename, file_content):
             'parents': [FOLDER_ID],
             'mimeType': 'application/json'
         }
-        drive_service.files().create(body=file_metadata, media_body=media, fields='id').execute() 
+        drive_service.files().create(body=file_metadata, media_body=media, fields='id').execute()
+    st.rerun() 
