@@ -39,7 +39,7 @@ def update_recent_templates(template_file):
     st.session_state['recent_templates'] = st.session_state['recent_templates'][:3]
 
 def show_template_stats(template_files):
-    st.markdown(f"<div style='background-color:#f0f4fa;padding:8px 16px;border-radius:8px;display:inline-block;margin-bottom:10px;font-size:1.1em;'><b>📊 Total Email Templates:</b> {len(template_files)}</div>", unsafe_allow_html=True)
+    st.markdown(f"<div style='background-color:rgba(220,220,220,0.7);padding:8px 16px;border-radius:8px;display:inline-block;margin-bottom:10px;font-size:1.1em;'><b>📊 Total Email Templates:</b> {len(template_files)}</div>", unsafe_allow_html=True)
 
 tabs = st.tabs(["Generate Response", "Add New Template", "Edit Template"])
 
