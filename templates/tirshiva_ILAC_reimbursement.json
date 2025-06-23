@@ -8,5 +8,6 @@
     "reimbursement_id",
     "reimbursement_amount",
     "Shipment_summary"
-  ]
+  ],
+  "description": "When investigation is completed and reimbursement is required."
 } 

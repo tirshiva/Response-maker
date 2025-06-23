@@ -5,5 +5,6 @@
     "shipment_number",
     "FNSKU",
     "shipment_summary_report"
-  ]
+  ],
+  "description": "When unit discrepancies have been reconciled and the investigation is complete."
 }
