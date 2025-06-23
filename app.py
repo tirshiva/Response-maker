@@ -1,7 +1,7 @@
 import streamlit as st
 import re
 import json
-from template_manager import list_templates, load_template, save_template
+from template_manager import list_templates, load_template, save_template, clear_template_cache
 
 TEMPLATE_DIR = 'templates'
 
@@ -24,7 +24,7 @@ def parse_template_info(filename):
     return user, skill, template_shortname
 
 st.set_page_config(page_title="Response Maker", layout="centered")
-st.title("�� Response Maker")
+st.title("📧 Response Maker")
 
 def show_retry_button(context_key):
     if st.button("Retry", key=f"retry_{context_key}"):
@@ -34,6 +34,7 @@ tabs = st.tabs(["Generate Response", "Add New Template", "Edit Template"])
 
 # --- Tab 1: Generate Response ---
 with tabs[0]:
+    st.button("Refresh Templates", on_click=clear_template_cache, key="refresh_templates_btn")
     template_files = list_templates()
     if not template_files:
         st.warning("No templates found. Please add a template first or check your connection.")
@@ -50,59 +51,61 @@ with tabs[0]:
             st.info("No templates match the selected filters.")
         else:
             filtered_files = [template_files[i] for i in filtered_indices]
-            templates = [load_template(f) for f in filtered_files]
-            template_labels = [f"{t['name']} ({t.get('description', 'No description')})" for t in templates]
-            selected_idx = st.selectbox("Choose a template", range(len(filtered_files)), format_func=lambda i: template_labels[i], key="gen_template_select")
+            selected_idx = st.selectbox("Choose a template", range(len(filtered_files)), format_func=lambda i: filtered_files[i], key="gen_template_select")
             selected_template_file = filtered_files[selected_idx]
-            template = templates[selected_idx]
-            st.markdown(f"**Template:** {template['name']}")
-            st.markdown(f"**Description:** {template.get('description', 'No description provided.')}")
-            st.markdown("**Email Preview:**")
-            st.code(template['body'], language='markdown')
-            st.subheader("Fill in the variables:")
-            user_inputs = {}
-            for var in template['variables']:
-                user_inputs[var] = st.text_input(f"{var.replace('_', ' ').capitalize()}", key=f"gen_var_{var}")
-            def fill_template(body, variables):
-                return body.format(**variables)
-            if st.button("Generate Response", key="gen_generate_btn"):
-                try:
-                    response = fill_template(template['body'], user_inputs)
-                    st.success("Generated Email:")
-                    st.text_area("Response", response, height=400, key="gen_response_box")
-                    st.code(response, language='markdown')
-                    st.write('---')
-                    st.download_button("Download as .txt", response, file_name="response.txt", key="gen_download_btn")
-                    # Add JS to detect copy event and show a message
-                    st.markdown(
-                        '''<script>
-                        const textarea = window.parent.document.querySelector('textarea[data-testid=\"stTextArea\"]');
-                        if (textarea) {
-                            textarea.addEventListener('copy', function() {
-                                const streamlitDoc = window.parent.document;
-                                let msg = streamlitDoc.getElementById('copy-msg');
-                                if (!msg) {
-                                    msg = streamlitDoc.createElement('div');
-                                    msg.id = 'copy-msg';
-                                    msg.style.position = 'fixed';
-                                    msg.style.top = '10px';
-                                    msg.style.right = '10px';
-                                    msg.style.background = '#4BB543';
-                                    msg.style.color = 'white';
-                                    msg.style.padding = '10px 20px';
-                                    msg.style.borderRadius = '8px';
-                                    msg.style.zIndex = 9999;
-                                    msg.innerText = 'Email is copied';
-                                    streamlitDoc.body.appendChild(msg);
-                                    setTimeout(() => { msg.remove(); }, 2000);
-                                }
-                            });
-                        }
-                        </script>''',
-                        unsafe_allow_html=True
-                    )
-                except KeyError as e:
-                    st.error(f"Missing value for variable: {e}")
+            template = load_template(selected_template_file)
+            if not template:
+                st.error("Could not load the selected template.")
+                show_retry_button("gen_load")
+            else:
+                st.markdown(f"**Template:** {template['name']}")
+                st.markdown(f"**Description:** {template.get('description', 'No description provided.')}")
+                st.markdown("**Email Preview:**")
+                st.code(template['body'], language='markdown')
+                st.subheader("Fill in the variables:")
+                user_inputs = {}
+                for var in template['variables']:
+                    user_inputs[var] = st.text_input(f"{var.replace('_', ' ').capitalize()}", key=f"gen_var_{var}")
+                def fill_template(body, variables):
+                    return body.format(**variables)
+                if st.button("Generate Response", key="gen_generate_btn"):
+                    try:
+                        response = fill_template(template['body'], user_inputs)
+                        st.success("Generated Email:")
+                        st.text_area("Response", response, height=400, key="gen_response_box")
+                        st.code(response, language='markdown')
+                        st.write('---')
+                        st.download_button("Download as .txt", response, file_name="response.txt", key="gen_download_btn")
+                        # Add JS to detect copy event and show a message
+                        st.markdown(
+                            '''<script>
+                            const textarea = window.parent.document.querySelector('textarea[data-testid=\"stTextArea\"]');
+                            if (textarea) {
+                                textarea.addEventListener('copy', function() {
+                                    const streamlitDoc = window.parent.document;
+                                    let msg = streamlitDoc.getElementById('copy-msg');
+                                    if (!msg) {
+                                        msg = streamlitDoc.createElement('div');
+                                        msg.id = 'copy-msg';
+                                        msg.style.position = 'fixed';
+                                        msg.style.top = '10px';
+                                        msg.style.right = '10px';
+                                        msg.style.background = '#4BB543';
+                                        msg.style.color = 'white';
+                                        msg.style.padding = '10px 20px';
+                                        msg.style.borderRadius = '8px';
+                                        msg.style.zIndex = 9999;
+                                        msg.innerText = 'Email is copied';
+                                        streamlitDoc.body.appendChild(msg);
+                                        setTimeout(() => { msg.remove(); }, 2000);
+                                    }
+                                });
+                            }
+                            </script>''',
+                            unsafe_allow_html=True
+                        )
+                    except KeyError as e:
+                        st.error(f"Missing value for variable: {e}")
 
 # --- Tab 2: Add New Template ---
 with tabs[1]:
@@ -117,6 +120,7 @@ with tabs[1]:
     </div>
     """, unsafe_allow_html=True)
     st.header("Add a New Email Template")
+    st.button("Refresh Templates", on_click=clear_template_cache, key="refresh_templates_btn_add")
     template_files = list_templates()
     if not template_files:
         st.warning("Could not load templates. Please check your connection.")
@@ -153,6 +157,7 @@ with tabs[1]:
 # --- Tab 3: Edit Template ---
 with tabs[2]:
     st.header("Edit an Existing Template")
+    st.button("Refresh Templates", on_click=clear_template_cache, key="refresh_templates_btn_edit")
     template_files = list_templates()
     if not template_files:
         st.warning("No templates found to edit or could not load templates. Please check your connection.")
