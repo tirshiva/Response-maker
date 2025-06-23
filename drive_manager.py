@@ -1,17 +1,23 @@
 import io
 import os
+import json
 from google.oauth2 import service_account
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaIoBaseDownload, MediaIoBaseUpload
 
-# Set your service account file and folder ID
-SERVICE_ACCOUNT_FILE = 'sellers-responses-c029d3bdaf57.json'
+# Set your Google Drive folder ID
 FOLDER_ID = '1n82PnBOXUg7ubBHu0hctxn3B2ujB1jTG'
 SCOPES = ['https://www.googleapis.com/auth/drive']
 
-credentials = service_account.Credentials.from_service_account_file(
-    SERVICE_ACCOUNT_FILE, scopes=SCOPES
-)
+def get_credentials():
+    import streamlit as st
+    if hasattr(st, 'secrets') and 'gdrive' in st.secrets and 'service_account_json' in st.secrets['gdrive']:
+        service_account_info = json.loads(st.secrets['gdrive']['service_account_json'])
+        return service_account.Credentials.from_service_account_info(service_account_info, scopes=SCOPES)
+    else:
+        raise RuntimeError("Service account JSON not found in Streamlit secrets. Please add it to your secrets.")
+
+credentials = get_credentials()
 drive_service = build('drive', 'v3', credentials=credentials)
 
 def list_templates_drive():
