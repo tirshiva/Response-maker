@@ -38,8 +38,8 @@ with tabs[0]:
         user_skill_template_list = [parse_template_info(f) for f in template_files]
         users = sorted(set(u for u, _, _ in user_skill_template_list))
         skills = sorted(set(s for _, s, _ in user_skill_template_list))
-        selected_users = st.multiselect("Filter by User Alias", users, default=users)
-        selected_skills = st.multiselect("Filter by Skill", skills, default=skills)
+        selected_users = st.multiselect("Filter by User Alias", users, default=users, key="gen_user_filter")
+        selected_skills = st.multiselect("Filter by Skill", skills, default=skills, key="gen_skill_filter")
         filtered_indices = [i for i, (u, s, _) in enumerate(user_skill_template_list) if u in selected_users and s in selected_skills]
         if not filtered_indices:
             st.info("No templates match the selected filters.")
@@ -47,7 +47,7 @@ with tabs[0]:
             filtered_files = [template_files[i] for i in filtered_indices]
             templates = [load_template(f) for f in filtered_files]
             template_labels = [f"{t['name']} ({t.get('description', 'No description')})" for t in templates]
-            selected_idx = st.selectbox("Choose a template", range(len(filtered_files)), format_func=lambda i: template_labels[i])
+            selected_idx = st.selectbox("Choose a template", range(len(filtered_files)), format_func=lambda i: template_labels[i], key="gen_template_select")
             selected_template_file = filtered_files[selected_idx]
             template = templates[selected_idx]
             st.markdown(f"**Template:** {template['name']}")
@@ -57,17 +57,17 @@ with tabs[0]:
             st.subheader("Fill in the variables:")
             user_inputs = {}
             for var in template['variables']:
-                user_inputs[var] = st.text_input(f"{var.replace('_', ' ').capitalize()}")
+                user_inputs[var] = st.text_input(f"{var.replace('_', ' ').capitalize()}", key=f"gen_var_{var}")
             def fill_template(body, variables):
                 return body.format(**variables)
-            if st.button("Generate Response"):
+            if st.button("Generate Response", key="gen_generate_btn"):
                 try:
                     response = fill_template(template['body'], user_inputs)
                     st.success("Generated Email:")
-                    st.text_area("Response", response, height=400, key="response_box")
+                    st.text_area("Response", response, height=400, key="gen_response_box")
                     st.code(response, language='markdown')
                     st.write('---')
-                    st.download_button("Download as .txt", response, file_name="response.txt")
+                    st.download_button("Download as .txt", response, file_name="response.txt", key="gen_download_btn")
                     # Add JS to detect copy event and show a message
                     st.markdown(
                         '''<script>
@@ -112,16 +112,16 @@ with tabs[1]:
     </div>
     """, unsafe_allow_html=True)
     st.header("Add a New Email Template")
-    template_name = st.text_input("Template Name (e.g., tirshiva_ILAC_reimbursement)")
-    template_description = st.text_input("Short Description (when to use this template)")
-    email_body = st.text_area("Paste your email template here. Use {variable} for placeholders.", height=300)
+    template_name = st.text_input("Template Name (e.g., tirshiva_ILAC_reimbursement)", key="add_template_name")
+    template_description = st.text_input("Short Description (when to use this template)", key="add_template_description")
+    email_body = st.text_area("Paste your email template here. Use {variable} for placeholders.", height=300, key="add_email_body")
     detected_vars = []
     if email_body:
         detected_vars = re.findall(r'\{(.*?)\}', email_body)
         detected_vars = list(dict.fromkeys([v.strip() for v in detected_vars if v.strip()]))  # unique, non-empty
         st.info(f"Detected variables: {', '.join(detected_vars) if detected_vars else 'None'}")
-    custom_vars = st.text_input("Edit variables (comma-separated)", value=", ".join(detected_vars))
-    if st.button("Save Template"):
+    custom_vars = st.text_input("Edit variables (comma-separated)", value=", ".join(detected_vars), key="add_custom_vars")
+    if st.button("Save Template", key="add_save_btn"):
         if not template_name.strip():
             st.error("Template name is required.")
         elif not email_body.strip():
@@ -139,7 +139,7 @@ with tabs[1]:
             filename = f"{template_name.strip().replace(' ', '_').lower()}.json"
             save_template(filename, template_data)
             st.success(f"Template '{template_name}' saved!")
-            st.experimental_rerun()
+            st.rerun()
 
 # --- Tab 3: Edit Template ---
 with tabs[2]:
@@ -154,13 +154,13 @@ with tabs[2]:
             st.error("Could not load the selected template.")
         else:
             # Pre-fill fields
-            new_name = st.text_input("Template Name (cannot be changed)", value=selected_template_file.rsplit('.', 1)[0], disabled=True)
-            new_description = st.text_input("Short Description (when to use this template)", value=template.get("description", ""))
-            new_body = st.text_area("Email body (use {variable} for placeholders)", value=template.get("body", ""), height=300)
+            new_name = st.text_input("Template Name (cannot be changed)", value=selected_template_file.rsplit('.', 1)[0], disabled=True, key="edit_template_name")
+            new_description = st.text_input("Short Description (when to use this template)", value=template.get("description", ""), key="edit_template_description")
+            new_body = st.text_area("Email body (use {variable} for placeholders)", value=template.get("body", ""), height=300, key="edit_email_body")
             detected_vars = re.findall(r'\{(.*?)\}', new_body)
             detected_vars = list(dict.fromkeys([v.strip() for v in detected_vars if v.strip()]))
             st.info(f"Detected variables: {', '.join(detected_vars) if detected_vars else 'None'}")
-            custom_vars = st.text_input("Edit variables (comma-separated)", value=", ".join(detected_vars))
+            custom_vars = st.text_input("Edit variables (comma-separated)", value=", ".join(detected_vars), key="edit_custom_vars")
             if st.button("Save Changes", key="edit_save_btn"):
                 if not new_body.strip():
                     st.error("Email body is required.")
@@ -175,4 +175,5 @@ with tabs[2]:
                         "description": new_description.strip()
                     }
                     save_template(selected_template_file, template_data)
-                    st.success(f"Template '{selected_template_file}' updated!") 
+                    st.success(f"Template '{selected_template_file}' updated!")
+                    st.rerun() 
