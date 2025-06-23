@@ -54,33 +54,34 @@ with tabs[0]:
     else:
         # Search box for template name
         search_query = st.text_input("Search template name", "", key="gen_search_box")
-        filtered_template_files = [f for f in template_files if search_query.lower() in f.lower()]
-        # Recent templates section
+        # Parse user, skill, and template name from filenames
+        user_skill_template_list = [parse_template_info(f) for f in template_files]
+        users = sorted(set(u for u, _, _ in user_skill_template_list))
+        skills = sorted(set(s for _, s, _ in user_skill_template_list))
+        selected_users = st.multiselect("Filter by User Alias", users, default=users, key="gen_user_filter")
+        selected_skills = st.multiselect("Filter by Skill", skills, default=skills, key="gen_skill_filter")
+        # Apply search and filters
+        filtered_indices = [i for i, (u, s, _) in enumerate(user_skill_template_list)
+                            if u in selected_users and s in selected_skills and search_query.lower() in template_files[i].lower()]
+        filtered_template_files = [template_files[i] for i in filtered_indices]
+        # Recent templates section (filtered)
         st.markdown("**Recent Templates:**")
         recent_templates = st.session_state.get('recent_templates', [])
-        shown_recent = [f for f in recent_templates if f in template_files][:3]
+        shown_recent = [f for f in recent_templates if f in filtered_template_files][:3]
         cols = st.columns(len(shown_recent) if shown_recent else 1)
         selected_recent = None
         for i, f in enumerate(shown_recent):
             if cols[i].button(f, key=f"recent_btn_{f}"):
                 selected_recent = f
-        # Parse user, skill, and template name from filenames
-        user_skill_template_list = [parse_template_info(f) for f in filtered_template_files]
-        users = sorted(set(u for u, _, _ in user_skill_template_list))
-        skills = sorted(set(s for _, s, _ in user_skill_template_list))
-        selected_users = st.multiselect("Filter by User Alias", users, default=users, key="gen_user_filter")
-        selected_skills = st.multiselect("Filter by Skill", skills, default=skills, key="gen_skill_filter")
-        filtered_indices = [i for i, (u, s, _) in enumerate(user_skill_template_list) if u in selected_users and s in selected_skills]
-        if not filtered_indices:
+        if not filtered_template_files:
             st.info("No templates match the selected filters.")
         else:
-            filtered_files = [filtered_template_files[i] for i in filtered_indices]
             # If a recent template button was clicked, use it as the selected template
-            if selected_recent and selected_recent in filtered_files:
-                selected_idx = filtered_files.index(selected_recent)
+            if selected_recent and selected_recent in filtered_template_files:
+                selected_idx = filtered_template_files.index(selected_recent)
             else:
-                selected_idx = st.selectbox("Choose a template", range(len(filtered_files)), format_func=lambda i: filtered_files[i], key="gen_template_select")
-            selected_template_file = filtered_files[selected_idx]
+                selected_idx = st.selectbox("Choose a template", range(len(filtered_template_files)), format_func=lambda i: filtered_template_files[i], key="gen_template_select")
+            selected_template_file = filtered_template_files[selected_idx]
             template = load_template(selected_template_file)
             if not template:
                 st.error("Could not load the selected template.")
