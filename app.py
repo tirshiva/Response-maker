@@ -24,7 +24,11 @@ def parse_template_info(filename):
     return user, skill, template_shortname
 
 st.set_page_config(page_title="Response Maker", layout="centered")
-st.title("📧 Response Maker")
+st.title("�� Response Maker")
+
+def show_retry_button(context_key):
+    if st.button("Retry", key=f"retry_{context_key}"):
+        st.rerun()
 
 tabs = st.tabs(["Generate Response", "Add New Template", "Edit Template"])
 
@@ -32,7 +36,8 @@ tabs = st.tabs(["Generate Response", "Add New Template", "Edit Template"])
 with tabs[0]:
     template_files = list_templates()
     if not template_files:
-        st.warning("No templates found. Please add a template first.")
+        st.warning("No templates found. Please add a template first or check your connection.")
+        show_retry_button("gen")
     else:
         # Parse user, skill, and template name from filenames
         user_skill_template_list = [parse_template_info(f) for f in template_files]
@@ -112,6 +117,10 @@ with tabs[1]:
     </div>
     """, unsafe_allow_html=True)
     st.header("Add a New Email Template")
+    template_files = list_templates()
+    if not template_files:
+        st.warning("Could not load templates. Please check your connection.")
+        show_retry_button("add")
     template_name = st.text_input("Template Name (e.g., tirshiva_ILAC_reimbursement)", key="add_template_name")
     template_description = st.text_input("Short Description (when to use this template)", key="add_template_description")
     email_body = st.text_area("Paste your email template here. Use {variable} for placeholders.", height=300, key="add_email_body")
@@ -146,12 +155,14 @@ with tabs[2]:
     st.header("Edit an Existing Template")
     template_files = list_templates()
     if not template_files:
-        st.warning("No templates found to edit.")
+        st.warning("No templates found to edit or could not load templates. Please check your connection.")
+        show_retry_button("edit")
     else:
         selected_template_file = st.selectbox("Select a template to edit", template_files, key="edit_template_select")
         template = load_template(selected_template_file)
         if template is None:
             st.error("Could not load the selected template.")
+            show_retry_button("edit_load")
         else:
             # Pre-fill fields
             new_name = st.text_input("Template Name (cannot be changed)", value=selected_template_file.rsplit('.', 1)[0], disabled=True, key="edit_template_name")
